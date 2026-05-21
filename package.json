@@ -1,0 +1,24 @@
+{
+  "name": "pctrack-netlify",
+  "version": "1.0.0",
+  "description": "Sistema de mantenimiento de equipos - Netlify + Postgres",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "netlify:dev": "netlify dev",
+    "build": "echo \"No build step needed\""
+  },
+  "license": "ISC",
+  "dependencies": {
+    "@netlify/database": "latest",
+    "bcryptjs": "^2.4.3",
+    "cookie-session": "^2.1.0",
+    "express": "^4.18.3",
+    "pg": "^8.13.1",
+    "serverless-http": "^3.2.0"
+  },
+  "devDependencies": {
+    "netlify-cli": "latest"
+  }
+}

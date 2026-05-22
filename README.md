@@ -18,12 +18,6 @@ npm start
 # http://localhost:3000
 ```
 
-## 🔐 Credenciales
-
-| Usuario | Contraseña |
-|---------|-----------|
-| `admin` | `admin123` |
-
 ## 📦 Stack
 
 | Capa | Tecnología |

@@ -116,12 +116,13 @@ function render() { renderStats(); renderAlerts(); renderTable(); }
 function renderStats() {
   const total   = devices.length;
   const ok      = devices.filter(d => alertStatus(d) === 'ok').length;
-  const pending = devices.filter(d => ['pending','pending-never'].includes(alertStatus(d))).length;
+  const frequent = devices.filter(d => parseInt(d.service_count || 0) >= 3).length;
+  const services = devices.reduce((sum, d) => sum + (parseInt(d.service_count || 0) || 0), 0);
   const overdue = devices.filter(d => alertStatus(d) === 'overdue').length;
   document.getElementById('statsGrid').innerHTML = `
     <div class="stat-card"><div class="stat-icon-wrap si-blue"><i class="bi bi-hdd-stack"></i></div><div class="stat-info"><div class="val">${total}</div><div class="lbl">Total equipos</div></div></div>
-    <div class="stat-card"><div class="stat-icon-wrap si-green"><i class="bi bi-check-circle-fill"></i></div><div class="stat-info"><div class="val">${ok}</div><div class="lbl">Al día</div></div></div>
-    <div class="stat-card"><div class="stat-icon-wrap si-yellow"><i class="bi bi-hourglass-split"></i></div><div class="stat-info"><div class="val">${pending}</div><div class="lbl">Pendientes</div></div></div>
+    <div class="stat-card"><div class="stat-icon-wrap si-green"><i class="bi bi-stars"></i></div><div class="stat-info"><div class="val">${frequent}</div><div class="lbl">Clientes frecuentes</div></div></div>
+    <div class="stat-card"><div class="stat-icon-wrap si-yellow"><i class="bi bi-tools"></i></div><div class="stat-info"><div class="val">${services}</div><div class="lbl">Servicios realizados</div></div></div>
     <div class="stat-card"><div class="stat-icon-wrap si-red"><i class="bi bi-exclamation-triangle-fill"></i></div><div class="stat-info"><div class="val">${overdue}</div><div class="lbl">Vencidos</div></div></div>
   `;
 }
@@ -143,7 +144,7 @@ function renderTable() {
   document.getElementById('clearFiltersBtn').style.display = (q||sf||inf) ? 'flex' : 'none';
 
   const filtered = devices.filter(d => {
-    const matchQ = !q || [d.name,d.description,d.assigned_to,d.location].filter(Boolean).some(s=>s.toLowerCase().includes(q));
+    const matchQ = !q || [d.name,d.description,d.assigned_to,d.location,d.client_name,d.client_phone,d.client_email].filter(Boolean).some(s=>s.toLowerCase().includes(q));
     const as = alertStatus(d);
     const matchS = !sf ||
       (sf==='ok'      && as==='ok') ||
@@ -209,7 +210,7 @@ function buildRow(d) {
     <td class="d-none d-xl-table-cell"><span class="date-mono">${fmtDate(d.last_maint)}</span></td>
     <td class="d-none d-lg-table-cell">${nextHtml}</td>
     <td class="d-none d-md-table-cell"><span class="interval-tag"><i class="bi bi-arrow-repeat"></i> ${months===6?'6 meses':'1 año'}</span></td>
-    <td class="d-none d-xl-table-cell">${d.assigned_to?`<span class="assigned-tag"><i class="bi bi-person-circle"></i>${esc(d.assigned_to)}</span>`:'<span class="date-mono">—</span>'}</td>
+    <td class="d-none d-xl-table-cell">${clientCell(d)}</td>
     <td><div class="actions-cell">
       <button class="icon-btn view"    title="Ver detalle"              onclick="openDetail('${d.id}')"><i class="bi bi-eye"></i></button>
       <button class="icon-btn success" title="Registrar mantenimiento"  onclick="markDone('${d.id}')"><i class="bi bi-check-lg"></i></button>
@@ -217,6 +218,18 @@ function buildRow(d) {
       <button class="icon-btn danger"  title="Eliminar"                 onclick="openDeleteModal('${d.id}')"><i class="bi bi-trash3"></i></button>
     </div></td>
   </tr>`;
+}
+
+
+function clientCell(d) {
+  const count = parseInt(d.service_count || 0) || 0;
+  const frequent = count >= 3;
+  if (!d.client_name && !d.client_phone && !d.client_email) return '<span class="date-mono">—</span>';
+  return `<div class="assigned-tag" style="display:inline-flex;gap:.35rem;align-items:center;flex-wrap:wrap">
+    <i class="bi bi-person-badge"></i>${esc(d.client_name || 'Cliente')}
+    ${d.client_phone ? `<span class="date-mono">${esc(d.client_phone)}</span>` : ''}
+    <span class="badge ${frequent ? 'badge-ok' : 'badge-pending'}">${frequent ? 'Frecuente' : 'Nuevo'} · ${count} servicio(s)</span>
+  </div>`;
 }
 
 // ── Filters ───────────────────────────────────
@@ -236,7 +249,8 @@ function openAddModal() {
   document.getElementById('deviceModalIcon').innerHTML = '<i class="bi bi-plus-lg"></i>';
   document.getElementById('deviceModalIcon').className = 'modal-icon';
   document.getElementById('saveDeviceLabel').textContent = 'Guardar equipo';
-  ['editId','fName','fDesc','fLocation','fAssigned'].forEach(id => document.getElementById(id).value = '');
+  ['editId','fName','fDesc','fLocation','fAssigned','fClientName','fClientPhone','fClientEmail'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('fServiceCount').value = '0';
   document.getElementById('fStatus').value   = 'pending';
   document.getElementById('fInterval').value = '6';
   document.getElementById('fLastMaint').value = today();
@@ -255,6 +269,10 @@ function openEditModal(id) {
   document.getElementById('fDesc').value      = d.description||'';
   document.getElementById('fLocation').value  = d.location||'';
   document.getElementById('fAssigned').value  = d.assigned_to||'';
+  document.getElementById('fClientName').value = d.client_name||'';
+  document.getElementById('fClientPhone').value = d.client_phone||'';
+  document.getElementById('fClientEmail').value = d.client_email||'';
+  document.getElementById('fServiceCount').value = parseInt(d.service_count || 0) || 0;
   document.getElementById('fStatus').value    = d.status||'pending';
   document.getElementById('fInterval').value  = String(d.interval_months||6);
   document.getElementById('fLastMaint').value = d.last_maint||today();
@@ -270,6 +288,10 @@ async function saveDevice() {
     description:     document.getElementById('fDesc').value.trim(),
     location:        document.getElementById('fLocation').value.trim(),
     assigned_to:     document.getElementById('fAssigned').value.trim(),
+    client_name:     document.getElementById('fClientName').value.trim(),
+    client_phone:    document.getElementById('fClientPhone').value.trim(),
+    client_email:    document.getElementById('fClientEmail').value.trim(),
+    service_count:   parseInt(document.getElementById('fServiceCount').value) || 0,
     status:          document.getElementById('fStatus').value,
     interval_months: parseInt(document.getElementById('fInterval').value),
     last_maint:      document.getElementById('fLastMaint').value || null,
@@ -347,6 +369,10 @@ function openDetail(id) {
     <div class="detail-field"><label>Descripción</label><div class="val">${esc(d.description||'—')}</div></div>
     <div class="detail-field"><label>Ubicación</label><div class="val"><i class="bi bi-geo-alt" style="color:var(--text-muted)"></i> ${esc(d.location||'—')}</div></div>
     <div class="detail-field"><label>Usuario asignado</label><div class="val"><i class="bi bi-person" style="color:var(--text-muted)"></i> ${esc(d.assigned_to||'—')}</div></div>
+    <div class="detail-field"><label>Cliente</label><div class="val"><i class="bi bi-person-badge" style="color:var(--text-muted)"></i> ${esc(d.client_name||'—')}</div></div>
+    <div class="detail-field"><label>Teléfono / WhatsApp</label><div class="val"><i class="bi bi-whatsapp" style="color:var(--text-muted)"></i> ${esc(d.client_phone||'—')}</div></div>
+    <div class="detail-field"><label>Correo</label><div class="val"><i class="bi bi-envelope" style="color:var(--text-muted)"></i> ${esc(d.client_email||'—')}</div></div>
+    <div class="detail-field"><label>Fidelización</label><div class="val">${(parseInt(d.service_count||0)||0) >= 3 ? '<span class="badge badge-ok"><i class="bi bi-stars"></i> Cliente frecuente</span>' : '<span class="badge badge-pending">Cliente nuevo</span>'} <span class="date-mono">${parseInt(d.service_count||0)||0} servicio(s)</span></div></div>
     <div class="detail-field"><label>Intervalo</label><div class="val"><i class="bi bi-arrow-repeat" style="color:var(--text-muted)"></i> ${months===6?'Cada 6 meses':'Cada 1 año'}</div></div>
     <div class="detail-field"><label>Último mantenimiento</label><div class="val mono">${fmtDate(d.last_maint)}</div></div>
     <div class="detail-field"><label>Próximo mantenimiento</label><div class="val mono ${as==='overdue'?'next-over':as==='soon'?'next-warn':'next-ok'}">${fmtDate(next)}</div></div>

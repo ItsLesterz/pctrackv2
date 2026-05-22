@@ -19,7 +19,7 @@ async function getConnectionString() {
       return netlifyDatabase.getConnectionString();
     }
   } catch (err) {
-    // Si no está corriendo dentro de Netlify Database, usamos el error claro de abajo.
+    // Si no esta corriendo dentro de Netlify Database, usamos el error claro de abajo.
   }
 
   throw new Error('Falta DATABASE_URL. En Netlify configura DATABASE_URL con el connection string de Supabase/Postgres.');
@@ -31,7 +31,7 @@ function sqlWithPgParams(sql) {
 }
 
 async function repairSchema() {
-  // Crea las tablas si no existen y también repara columnas faltantes si la tabla ya existía.
+  // Crea las tablas si no existen y tambien repara columnas faltantes si la tabla ya existia.
   await pool.query(`
     CREATE TABLE IF NOT EXISTS users (
       id SERIAL PRIMARY KEY,
@@ -50,6 +50,10 @@ async function repairSchema() {
       last_maint DATE,
       location TEXT DEFAULT '',
       assigned_to TEXT DEFAULT '',
+      client_name TEXT DEFAULT '',
+      client_phone TEXT DEFAULT '',
+      client_email TEXT DEFAULT '',
+      service_count INTEGER DEFAULT 0,
       created_at TIMESTAMPTZ DEFAULT NOW(),
       updated_at TIMESTAMPTZ DEFAULT NOW()
     );
@@ -72,6 +76,10 @@ async function repairSchema() {
     ALTER TABLE devices ADD COLUMN IF NOT EXISTS last_maint DATE;
     ALTER TABLE devices ADD COLUMN IF NOT EXISTS location TEXT DEFAULT '';
     ALTER TABLE devices ADD COLUMN IF NOT EXISTS assigned_to TEXT DEFAULT '';
+    ALTER TABLE devices ADD COLUMN IF NOT EXISTS client_name TEXT DEFAULT '';
+    ALTER TABLE devices ADD COLUMN IF NOT EXISTS client_phone TEXT DEFAULT '';
+    ALTER TABLE devices ADD COLUMN IF NOT EXISTS client_email TEXT DEFAULT '';
+    ALTER TABLE devices ADD COLUMN IF NOT EXISTS service_count INTEGER DEFAULT 0;
     ALTER TABLE devices ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();
     ALTER TABLE devices ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
 
@@ -88,7 +96,6 @@ async function repairSchema() {
       GREATEST((SELECT COALESCE(MAX(id), 1) FROM users), 1),
       true
     );
-
     SELECT setval(
       pg_get_serial_sequence('activity_log', 'id'),
       GREATEST((SELECT COALESCE(MAX(id), 1) FROM activity_log), 1),
@@ -101,7 +108,6 @@ async function initDB() {
   if (initialized) return;
 
   const connectionString = await getConnectionString();
-
   pool = new pg.Pool({
     connectionString,
     ssl: connectionString.includes('localhost') || connectionString.includes('127.0.0.1')
@@ -115,7 +121,6 @@ async function initDB() {
   await repairSchema();
 
   const adminRow = await queryOne('SELECT id FROM users WHERE username = ?', ['admin']);
-
   if (!adminRow) {
     const hash = bcrypt.hashSync('admingr01@', 10);
     await run('INSERT INTO users (username, password, role) VALUES (?, ?, ?)', ['admin', hash, 'admin']);
@@ -127,7 +132,6 @@ async function initDB() {
 
 async function query(sql, params = []) {
   if (!pool) await initDB();
-
   const result = await pool.query(sqlWithPgParams(sql), params);
   return result.rows;
 }
@@ -139,14 +143,7 @@ async function queryOne(sql, params = []) {
 
 async function run(sql, params = []) {
   if (!pool) await initDB();
-
   await pool.query(sqlWithPgParams(sql), params);
 }
 
-module.exports = {
-  initDB,
-  query,
-  queryOne,
-  run,
-  uid
-};
+module.exports = { initDB, query, queryOne, run, uid };

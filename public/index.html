@@ -31,7 +31,7 @@
       <label>Usuario</label>
       <div class="input-icon-wrap">
         <i class="bi bi-person input-icon"></i>
-        <input id="loginUser" type="text" class="gh-input" placeholder="admin" autocomplete="username"/>
+        <input id="loginUser" type="text" class="gh-input" placeholder="••••••••" autocomplete="username"/>
       </div>
     </div>
     <div class="login-field">
@@ -51,7 +51,6 @@
     </button>
     <div class="login-hint">
       <i class="bi bi-shield-lock"></i>
-      Credenciales: <code>admin</code> / <code>admingr01@</code>
     </div>
   </div>
 </div>
@@ -104,7 +103,7 @@
     <div class="toolbar">
       <div class="search-wrap">
         <i class="bi bi-search search-icon"></i>
-        <input id="searchInput" type="text" class="gh-input search-input" placeholder="Buscar equipo, usuario, ubicación..."/>
+        <input id="searchInput" type="text" class="gh-input search-input" placeholder="Buscar equipo, cliente, teléfono, usuario, ubicación..."/>
       </div>
       <div class="filters-group">
         <select id="filterStatus" class="gh-select">
@@ -135,7 +134,7 @@
               <th class="d-none d-xl-table-cell">Último mant.</th>
               <th class="d-none d-lg-table-cell">Próximo</th>
               <th class="d-none d-md-table-cell">Intervalo</th>
-              <th class="d-none d-xl-table-cell">Asignado a</th>
+              <th class="d-none d-xl-table-cell">Cliente</th>
               <th>Acciones</th>
             </tr>
           </thead>
@@ -174,10 +173,12 @@
             </div>
           </div>
         </div>
+
         <div class="gh-field" style="margin-bottom:1rem">
           <label>Descripción</label>
           <textarea id="fDesc" class="gh-input" rows="2" placeholder="Modelo, especificaciones, notas relevantes…"></textarea>
         </div>
+
         <div class="gh-field" style="margin-bottom:1rem">
           <label>Usuario asignado</label>
           <div class="input-icon-wrap">
@@ -185,6 +186,38 @@
             <input id="fAssigned" type="text" class="gh-input" placeholder="Nombre del responsable del equipo"/>
           </div>
         </div>
+
+        <div class="form-row-2">
+          <div class="gh-field">
+            <label>Cliente</label>
+            <div class="input-icon-wrap">
+              <i class="bi bi-person-badge input-icon"></i>
+              <input id="fClientName" type="text" class="gh-input" placeholder="Nombre del cliente"/>
+            </div>
+          </div>
+          <div class="gh-field">
+            <label>Teléfono / WhatsApp</label>
+            <div class="input-icon-wrap">
+              <i class="bi bi-whatsapp input-icon"></i>
+              <input id="fClientPhone" type="text" class="gh-input" placeholder="Ej. 9999-9999"/>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row-2" style="margin-bottom:1rem">
+          <div class="gh-field">
+            <label>Correo del cliente</label>
+            <div class="input-icon-wrap">
+              <i class="bi bi-envelope input-icon"></i>
+              <input id="fClientEmail" type="email" class="gh-input" placeholder="cliente@email.com"/>
+            </div>
+          </div>
+          <div class="gh-field">
+            <label>Servicios realizados</label>
+            <input id="fServiceCount" type="number" min="0" class="gh-input" placeholder="0"/>
+          </div>
+        </div>
+
         <div class="form-row-3">
           <div class="gh-field">
             <label>Estado</label>

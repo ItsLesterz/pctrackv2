@@ -36,13 +36,6 @@ La app crea las tablas automaticamente al arrancar. Si quieres conservar exactam
 netlify/database/migrations/202605210001_initial_schema.sql
 ```
 
-## Credenciales iniciales
-
-- Usuario: `admin`
-- Contraseña: `admingr01@`
-
-Cambia esa contraseña despues de entrar, o crea una ruta administrativa para cambiar usuarios antes de usarlo en produccion.
-
 ## Prueba local
 
 Con una base PostgreSQL disponible:

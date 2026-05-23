@@ -53,7 +53,11 @@ router.delete('/meta/log', auth, async (req, res) => {
 router.get('/:id', auth, async (req, res) => {
   try {
     const d = await queryOne('SELECT * FROM devices WHERE id = ?', [req.params.id]);
-    if (!d) return res.status(404).json({ error: 'Equipo no encontrado.' });
+
+    if (!d) {
+      return res.status(404).json({ error: 'Equipo no encontrado.' });
+    }
+
     res.json(d);
   } catch (err) {
     console.error(err);
@@ -110,7 +114,8 @@ router.post('/', auth, async (req, res) => {
       console.error('Error registrando historial al agregar equipo:', logErr);
     }
 
-    res.status(201).json(await queryOne('SELECT * FROM devices WHERE id = ?', [id]));
+    const newDevice = await queryOne('SELECT * FROM devices WHERE id = ?', [id]);
+    res.status(201).json(newDevice);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error agregando equipo.' });
@@ -134,7 +139,10 @@ router.put('/:id', auth, async (req, res) => {
     } = req.body;
 
     const existing = await queryOne('SELECT * FROM devices WHERE id = ?', [req.params.id]);
-    if (!existing) return res.status(404).json({ error: 'Equipo no encontrado.' });
+
+    if (!existing) {
+      return res.status(404).json({ error: 'Equipo no encontrado.' });
+    }
 
     if (!name || !name.trim()) {
       return res.status(400).json({ error: 'El nombre es requerido.' });
@@ -167,7 +175,8 @@ router.put('/:id', auth, async (req, res) => {
       console.error('Error registrando historial al editar equipo:', logErr);
     }
 
-    res.json(await queryOne('SELECT * FROM devices WHERE id = ?', [req.params.id]));
+    const updatedDevice = await queryOne('SELECT * FROM devices WHERE id = ?', [req.params.id]);
+    res.json(updatedDevice);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error actualizando equipo.' });
@@ -177,7 +186,10 @@ router.put('/:id', auth, async (req, res) => {
 router.patch('/:id/done', auth, async (req, res) => {
   try {
     const d = await queryOne('SELECT * FROM devices WHERE id = ?', [req.params.id]);
-    if (!d) return res.status(404).json({ error: 'Equipo no encontrado.' });
+
+    if (!d) {
+      return res.status(404).json({ error: 'Equipo no encontrado.' });
+    }
 
     await run(
       'UPDATE devices SET status=\'done\',last_maint=?,service_count=COALESCE(service_count,0)+1,updated_at=NOW() WHERE id=?',
@@ -193,7 +205,8 @@ router.patch('/:id/done', auth, async (req, res) => {
       console.error('Error registrando historial de mantenimiento:', logErr);
     }
 
-    res.json(await queryOne('SELECT * FROM devices WHERE id = ?', [req.params.id]));
+    const updatedDevice = await queryOne('SELECT * FROM devices WHERE id = ?', [req.params.id]);
+    res.json(updatedDevice);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error marcando mantenimiento.' });
@@ -203,7 +216,10 @@ router.patch('/:id/done', auth, async (req, res) => {
 router.delete('/:id', auth, async (req, res) => {
   try {
     const d = await queryOne('SELECT * FROM devices WHERE id = ?', [req.params.id]);
-    if (!d) return res.status(404).json({ error: 'Equipo no encontrado.' });
+
+    if (!d) {
+      return res.status(404).json({ error: 'Equipo no encontrado.' });
+    }
 
     await run('DELETE FROM devices WHERE id = ?', [req.params.id]);
 
